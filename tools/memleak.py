@@ -413,15 +413,15 @@ if not kernel_trace:
                         else:
                                 raise
 
-        attach_probes("malloc")
-        attach_probes("calloc")
-        attach_probes("realloc")
-        attach_probes("posix_memalign")
-        attach_probes("valloc")
-        attach_probes("memalign")
-        attach_probes("pvalloc")
+        attach_probes("tc_malloc", fn_prefix="malloc")
+        attach_probes("tc_calloc", fn_prefix="calloc")
+        attach_probes("tc_realloc", fn_prefix="realloc")
+        attach_probes("tc_posix_memalign", fn_prefix="posix_memalign")
+        attach_probes("tc_valloc", fn_prefix="valloc")
+        attach_probes("tc_memalign", fn_prefix="memalign")
+        attach_probes("tc_pvalloc", fn_prefix="pvalloc")
         attach_probes("aligned_alloc", can_fail=True)  # added in C11
-        bpf.attach_uprobe(name=obj, sym="free", fn_name="free_enter",
+        bpf.attach_uprobe(name=obj, sym="tc_free", fn_name="free_enter",
                                   pid=pid)
 
 else:
