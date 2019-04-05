@@ -138,6 +138,8 @@ enum my_globals {
 };
 BPF_ARRAY(my_globals, u64, MY_GLOBALS_MAX);
 
+// Can't find a ring buffer map (or an array of hash maps).
+// Unrolling a ping-pong buffer for now...
 BPF_HASH(counts_buffer_0, struct key_t);
 BPF_HASH(counts_buffer_1, struct key_t);
 
@@ -148,10 +150,12 @@ int do_perf_event(struct bpf_perf_event_data *ctx) {
     int zero = 0;
     u64 *buffer_elmt = my_globals.lookup_or_init(&key, &zero);
 
-    // the bcc way of __sync_fetch_and_add(buffer_elmt, 1);
-    my_globals.increment(key);
-
     bpf_trace_printk("sampling thread: buffer_elmt: %u\\n", *buffer_elmt);
+
+    //TODO report counts_buffer[buffer_elmt] to userspace
+    
+    // the bcc way of doing an atomic increment - __sync_fetch_and_add(buffer_elmt, 1);
+    my_globals.increment(key);
 
     return 0;
 }
@@ -160,6 +164,8 @@ int oncpu(struct pt_regs *ctx, struct task_struct *prev) {
     u32 pid = prev->pid;
     u32 tgid = prev->tgid;
     u64 ts, *tsp;
+
+    // TODO move from counts Hash Map to the ping-pong buffer.
 
     // record previous thread sleep time
     if ((THREAD_FILTER) && (STATE_FILTER)) {
